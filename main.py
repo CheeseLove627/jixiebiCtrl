@@ -10,7 +10,7 @@ import serial
 import time  # 延时使用
 import binascii
 
-s = 0#serial.Serial("COM3", 115200)  # 初始化串口
+s = serial.Serial("COM3", 115200)  # 初始化串口
 
 
 # 主窗口类
@@ -38,6 +38,9 @@ class MainWindow(Tk):
         self.cmd_down2paper = '00000009'
         self.cmd_reset = '00000010'
         self.cmd_printIO = '00000011'
+        #
+        self.step = 32
+        self.bias = 11
         # 加载gui
         self.setup_UI()
 
@@ -70,8 +73,11 @@ class MainWindow(Tk):
         self.Button_show = Button(self.LabelFrame_cmd, text="显示正确答案", width=12)
         self.Button_show.place(x=260, y=10)
 
-        self.Button_cal = Button(self.LabelFrame_cmd, text="启动机械臂", width=10, command=self.cmdf_gou)
+        self.Button_cal = Button(self.LabelFrame_cmd, text="画勾", width=5, command=self.cmdf_gou2)
         self.Button_cal.place(x=430, y=10)
+
+        self.Button_cal = Button(self.LabelFrame_cmd, text="画叉", width=5, command=self.cmdf_cha2)
+        self.Button_cal.place(x=530, y=10)
         # 添加电机控制控件
         # 第一行
         self.Button_cmd_run = Button(self.LabelFrame_ctrl, text="执行", command=self.cmdf_run)
@@ -228,15 +234,16 @@ class MainWindow(Tk):
         """
         X, Y, Z = x, y, z
         if plus:
-            X = str(hex(int(X, 16) + 32 * n)).replace('0x', '').zfill(4) if int(X, 16) <= (int('ffff', 16) - 32 * n) else str(
-                hex(32 * n - int('ffff', 16 * n) + int(X, 16))).replace('0x', '').zfill(4)
-            Z = str(hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
-                hex(int(Z, 16) - 10 * n)).replace('0x', '').zfill(4)
+            X = str(hex(int(X, 16) + self.step * n)).replace('0x', '').zfill(4) if int(X, 16) <= (
+                        int('ffff', 16) - self.step * n) else str(
+                hex(self.step * n - int('ffff', 16) + int(X, 16))).replace('0x', '').zfill(4)
+            Z = str(hex(int(Z, 16) + self.bias * n)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
+                hex(int(Z, 16) - self.bias * n)).replace('0x', '').zfill(4)
         else:
-            X = str(hex(int(X, 16) - 32 * n)).replace('0x', '').zfill(4) if int(X, 16) >= 32 * n else str(
-                hex(int('ffff', 16) - 32 * n)).replace('0x', '').zfill(4)
-            Z = str(hex(int(Z, 16) - 10 * n)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
-                hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4)
+            X = str(hex(int(X, 16) - self.step * n)).replace('0x', '').zfill(4) if int(X, 16) >= self.step * n else str(
+                hex(int('ffff', 16) - self.step * n)).replace('0x', '').zfill(4)
+            Z = str(hex(int(Z, 16) - self.bias * n)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
+                hex(int(Z, 16) + self.bias * n)).replace('0x', '').zfill(4)
         return X, Y, Z
 
     def delta_y(self, x, y, z, n=1, plus=True):
@@ -245,16 +252,16 @@ class MainWindow(Tk):
         """
         X, Y, Z = x, y, z
         if plus:
-            Y = str(hex(int(Y, 16) + 32 * n)).replace('0x', '').zfill(4) if int(Y, 16) <= (
-                    int('ffff', 16) - 32 * n) else str(
-                hex(32 * n - int('ffff', 16) + int(Y, 16))).replace('0x', '').zfill(4)
-            Z = str(hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
-                hex(int(Z, 16) - 10 * n)).replace('0x', '').zfill(4)
+            Y = str(hex(int(Y, 16) + self.step * n)).replace('0x', '').zfill(4) if int(Y, 16) <= (
+                    int('ffff', 16) - self.step * n) else str(
+                hex(self.step * n - int('ffff', 16) + int(Y, 16))).replace('0x', '').zfill(4)
+            Z = str(hex(int(Z, 16) + self.bias * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
+                hex(int(Z, 16) - self.bias * n)).replace('0x', '').zfill(4)
         else:
-            Y = str(hex(int(Y, 16) - 32 * n)).replace('0x', '').zfill(4) if int(Y, 16) >= 32 * n else str(
-                hex(int('ffff', 16) - 32 * n)).replace('0x', '').zfill(4)
-            Z = str(hex(int(Z, 16) - 10 * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
-                hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4)
+            Y = str(hex(int(Y, 16) - self.step * n)).replace('0x', '').zfill(4) if int(Y, 16) >= self.step * n else str(
+                hex(int('ffff', 16) - self.step * n)).replace('0x', '').zfill(4)
+            Z = str(hex(int(Z, 16) - (self.bias + 1) * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
+                hex(int(Z, 16) + (self.bias + 1) * n)).replace('0x', '').zfill(4)
         return X, Y, Z
 
     def delta_z(self, x, y, z, n=1, plus=True):
@@ -263,10 +270,10 @@ class MainWindow(Tk):
         """
         X, Y, Z = x, y, z
         if plus:
-            Z = str(hex(int(Z, 16) + 32 * n)).replace('0x', '').zfill(4)
+            Z = str(hex(int(Z, 16) + self.step * n)).replace('0x', '').zfill(4)
             if len(Z) > 4: Z = '0000'
         else:
-            Z = str(hex(int(Z, 16) - 32 * n)).replace('0x', '').zfill(4) if int(Z, 16) >= 32 * n else '0000'
+            Z = str(hex(int(Z, 16) - self.step * n)).replace('0x', '').zfill(4) if int(Z, 16) >= self.step * n else '0000'
         return X, Y, Z
 
     def cmdf_xplus(self, n=1, plus=True):
@@ -293,17 +300,17 @@ class MainWindow(Tk):
     def cmdf_zminus(self, n=1):
         self.cmdf_zplus(n=n, plus=False)
 
-    def delta_xy(self, x, y, z, n=3, k=-1):
+    def delta_xy(self, x, y, z, n=3, k=-1, plus=True):
         """
         any slope
         draw a line:y = kx
         n: length
         """
         X, Y, Z = x, y, z
-        flag = True if k > 0 else False
+        flag = False if (k > 0) ^ plus else True
         len = n
         # xplus
-        X, Y, Z = self.delta_x(X, Y, Z, n=len)
+        X, Y, Z = self.delta_x(X, Y, Z, n=len, plus=plus)
         # X = str(hex(int(X, 16) + 32 * n)).replace('0x', '').zfill(4) if int(X, 16) <= (
         #         int('ffff', 16) - 32 * n) else str(
         #     hex(32 * n - int('ffff', 16) + int(X, 16))).replace('0x', '').zfill(4)
@@ -317,111 +324,53 @@ class MainWindow(Tk):
         #     hex(int(Z, 16) + 9 * n)).replace('0x', '').zfill(4)
         return X, Y, Z
 
-    def cmdf_xiexian(self, n=3, k=-1):
+    def cmdf_xiexian(self, n=3, k=-1, plus=False):
         X, Y, Z = self.fun_point_get()
-        X, Y, Z = self.delta_xy(X, Y, Z, n, k)
+        X, Y, Z = self.delta_xy(X, Y, Z, n, k, plus=plus)
         self.fun_point_set(X, Y, Z)
 
-    def cmdf_gou(self, n=1):
-        ## step1 xie
-        # X, Y, Z = self.fun_point_get()
-        # n = 5
-        # xplus
-        # X = str(hex(int(X, 16) + 32 * n)).replace('0x', '').zfill(4) if int(X, 16) <= (
-        #         int('ffff', 16) - 32 * n) else str(
-        #     hex(32 * n - int('ffff', 16) + int(X, 16))).replace('0x', '').zfill(4)
-        # Z = str(hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
-        #     hex(int(Z, 16) - 10 * n)).replace('0x', '').zfill(4)
-        # # yminus
-        # Y = str(hex(int(Y, 16) - 32 * n)).replace('0x', '').zfill(4) if int(Y, 16) >= 32 * n else str(
-        #     hex(int('ffff', 16) - 32 * n)).replace('0x', '').zfill(4)
-        # Z = str(hex(int(Z, 16) - 10 * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
-        #     hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4)
-        # self.fun_point_set(X, Y, Z)
-        # time.sleep(1)
-        self.cmdf_xiexian(5)
+    def cmdf_gou2(self):
+        n = 3
+        height = 10
+        self.cmdf_yplus(n)
         time.sleep(1)
 
-        ## step2
-        # X, Y, Z = self.fun_point_get()
-        # m = 10
-        # # xplus
-        # X = str(hex(int(X, 16) + 32 * m)).replace('0x', '').zfill(4) if int(X, 16) <= (
-        #         int('ffff', 16) - 32 * m) else str(
-        #     hex(32 * m - int('ffff', 16) + int(X, 16))).replace('0x', '').zfill(4)
-        # Z = str(hex(int(Z, 16) + 10 * m)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
-        #     hex(int(Z, 16) - 10 * m)).replace('0x', '').zfill(4)
-        # yplus
-        # Y = str(hex(int(Y, 16) + 32 * m)).replace('0x', '').zfill(4) if int(Y, 16) <= (
-        #         int('ffff', 16) - 32 * m) else str(
-        #     hex(32 * m - int('ffff', 16) + int(Y, 16))).replace('0x', '').zfill(4)
-        # Z = str(hex(int(Z, 16) + 10 * m)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
-        #     hex(int(Z, 16) - 10 * m)).replace('0x', '').zfill(4)
-        # self.fun_point_set(X, Y, Z)
-        self.cmdf_xiexian(10, 1)
+        self.cmdf_zplus(height, plus=False)
+        time.sleep(1)
+        self.cmdf_xiexian(n, -2, plus=True)
         time.sleep(2)
-    def cmdf_cha(self):
-        ## step1 xie (x,y,z)->(x1,y1,z1)
-        X = self.var_x.get()
-        Y = self.var_y.get()
-        Z = self.var_z.get()
-        n = 5
-        # xplus
-        X1 = str(hex(int(X, 16) + 32 * n)).replace('0x', '').zfill(4) if int(X, 16) <= (
-                int('ffff', 16) - 32 * n) else str(
-            hex(32 * n - int('ffff', 16) + int(X, 16))).replace('0x', '').zfill(4)
-        Z1 = str(hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
-            hex(int(Z, 16) - 10 * n)).replace('0x', '').zfill(4)
-        # yminus
-        Y1 = str(hex(int(Y, 16) - 32 * n)).replace('0x', '').zfill(4) if int(Y, 16) >= 32 * n else str(
-            hex(int('ffff', 16) - 32 * n)).replace('0x', '').zfill(4)
-        Z1 = str(hex(int(Z1, 16) - 10 * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
-            hex(int(Z, 16) + 10 * n)).replace('0x', '').zfill(4)
-        self.var_x.set(X1)
-        self.var_y.set(Y1)
-        self.var_z.set(Z1)
-        self.cmdf_settrack()
-        time.sleep(1)
-        ## step2 lift (x1,y1,z1)->(x1,y1,z2) ,z2=z1+delta
-        # zplus
-        Z2 = str(hex(int(Z1, 16) + 32)).replace('0x', '').zfill(4)
-        if len(Z) > 4: Z = '0000'
-        self.var_x.set(X1)
-        self.var_y.set(Y1)
-        self.var_z.set(Z2)
-        self.cmdf_settrack()
-        time.sleep(1)
-        ## step3 find corresponding opint
-        # yplus the same scale with yminus (x1,y2,z2) y2=y
-        Y2 = str(hex(int(Y, 16) + 32 * n)).replace('0x', '').zfill(4) if int(Y, 16) <= (
-                int('ffff', 16) - 32 * n) else str(
-            hex(32 * n - int('ffff', 16) + int(Y, 16))).replace('0x', '').zfill(4)
-        Z2 = str(hex(int(Z2, 16) + 10 * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
-            hex(int(Z2, 16) - 10 * n)).replace('0x', '').zfill(4)
-        ## step4 land (x1,y2,z2)->(x1,y2,z1) ,z2=z1+delta
-        # zminus
-        self.var_x.set(X1)
-        self.var_y.set(Y2)
-        self.var_z.set(Z1)
-        self.cmdf_settrack()
-        time.sleep(1)
-        ## step5 fanxie (x1,y2,z1)->(x3,y3,z3)
-        # xminus
-        X3 = str(hex(int(X1, 16) - 32 * n)).replace('0x', '').zfill(4) if int(X1, 16) >= 32 * n else str(
-            hex(int('ffff', 16) - 32 * n)).replace('0x', '').zfill(4)
-        Z3 = str(hex(int(Z1, 16) - 10 * n)).replace('0x', '').zfill(4) if int(X1, 16) < int('f000', 16) else str(
-            hex(int(Z1, 16) + 10 * n)).replace('0x', '').zfill(4)
-        # yminus
-        Y3 = str(hex(int(Y2, 16) - 32 * n)).replace('0x', '').zfill(4) if int(Y2, 16) >= 32 * n else str(
-            hex(int('ffff', 16) - 32 * n)).replace('0x', '').zfill(4)
-        Z3 = str(hex(int(Z3, 16) - 10 * n)).replace('0x', '').zfill(4) if int(Y2, 16) < int('f000', 16) else str(
-            hex(int(Z3, 16) + 10 * n)).replace('0x', '').zfill(4)
-        self.var_x.set(X3)
-        self.var_y.set(Y3)
-        self.var_z.set(Z3)
-        self.cmdf_settrack()
+
+        self.cmdf_xiexian(n * 4, 1, plus=True)
+        time.sleep(2)
+        self.cmdf_zplus(height)
         time.sleep(1)
 
+        self.cmdf_down2paper()
+
+    def cmdf_cha2(self):
+        n = 2
+        height = 10
+        self.cmdf_yplus(n*3)
+        time.sleep(1)
+
+        self.cmdf_zplus(height, plus=False)
+        time.sleep(1)
+        self.cmdf_xiexian(n*4, -1, plus=True)
+        time.sleep(2)
+        self.cmdf_zplus(height)
+        time.sleep(1)
+
+        self.cmdf_yplus(n*4)
+        time.sleep(2)
+
+        self.cmdf_zplus(height, plus=False)
+        time.sleep(1)
+        self.cmdf_xiexian(n*5, 1.2, plus=False)
+        time.sleep(2)
+        self.cmdf_zplus(height)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
 
 if __name__ == "__main__":
     this_main = MainWindow()
