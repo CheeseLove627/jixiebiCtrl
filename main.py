@@ -12,7 +12,6 @@ import binascii
 
 s = serial.Serial("COM3", 115200)  # 初始化串口
 
-
 # 主窗口类
 class MainWindow(Tk):
     def __init__(self):
@@ -40,7 +39,7 @@ class MainWindow(Tk):
         self.cmd_printIO = '00000011'
         #
         self.step = 32
-        self.bias = 11
+        self.bias = 9
         # 加载gui
         self.setup_UI()
 
@@ -78,6 +77,9 @@ class MainWindow(Tk):
 
         self.Button_cal = Button(self.LabelFrame_cmd, text="画叉", width=5, command=self.cmdf_cha2)
         self.Button_cal.place(x=530, y=10)
+
+        self.Button_cal = Button(self.LabelFrame_cmd, text="画加", width=5, command=self.cmdf_Splus)
+        self.Button_cal.place(x=630, y=10)
         # 添加电机控制控件
         # 第一行
         self.Button_cmd_run = Button(self.LabelFrame_ctrl, text="执行", command=self.cmdf_run)
@@ -156,7 +158,7 @@ class MainWindow(Tk):
             frame = cv2.flip(frame, 1)  # 摄像头翻转
             cvimage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
             pilImage = Image.fromarray(cvimage)
-            pilImage = pilImage.resize((600, 480), Image.ANTIALIAS)
+            pilImage = pilImage.resize((600, 480), Image.LANCZOS)
             tkImage = ImageTk.PhotoImage(image=pilImage)
             if ref:  # 如果摄像头读取图像成功
                 self.Pane_canvas.canvas.create_image(300, 240, image=tkImage)
@@ -311,20 +313,13 @@ class MainWindow(Tk):
         len = n
         # xplus
         X, Y, Z = self.delta_x(X, Y, Z, n=len, plus=plus)
-        # X = str(hex(int(X, 16) + 32 * n)).replace('0x', '').zfill(4) if int(X, 16) <= (
-        #         int('ffff', 16) - 32 * n) else str(
-        #     hex(32 * n - int('ffff', 16) + int(X, 16))).replace('0x', '').zfill(4)
-        # Z = str(hex(int(Z, 16) + 9 * n)).replace('0x', '').zfill(4) if int(X, 16) < int('f000', 16) else str(
-        #     hex(int(Z, 16) - 9 * n)).replace('0x', '').zfill(4)
         # yminus
         X, Y, Z = self.delta_y(X, Y, Z, n=round(len * abs(k)), plus=flag)
-        # Y = str(hex(int(Y, 16) - 32 * n)).replace('0x', '').zfill(4) if int(Y, 16) >= 32 * n else str(
-        #     hex(int('ffff', 16) - 32 * n)).replace('0x', '').zfill(4)
-        # Z = str(hex(int(Z, 16) - 9 * n)).replace('0x', '').zfill(4) if int(Y, 16) < int('f000', 16) else str(
-        #     hex(int(Z, 16) + 9 * n)).replace('0x', '').zfill(4)
+        if flag:
+            X, Y, Z = self.delta_z(X, Y, Z, n=round(len/3), plus=False)
         return X, Y, Z
 
-    def cmdf_xiexian(self, n=3, k=-1, plus=False):
+    def cmdf_xiexian(self, n=3, k=1, plus=False):
         X, Y, Z = self.fun_point_get()
         X, Y, Z = self.delta_xy(X, Y, Z, n, k, plus=plus)
         self.fun_point_set(X, Y, Z)
@@ -360,7 +355,7 @@ class MainWindow(Tk):
         self.cmdf_zplus(height)
         time.sleep(1)
 
-        self.cmdf_yplus(n*4)
+        self.cmdf_yplus(n*5)
         time.sleep(2)
 
         self.cmdf_zplus(height, plus=False)
@@ -371,7 +366,32 @@ class MainWindow(Tk):
         time.sleep(1)
 
         self.cmdf_down2paper()
+    def cmdf_Splus(self):
+        n = 2
+        height = 10
+        self.cmdf_xplus(n * 2, plus=False)
+        time.sleep(1)
 
+        self.cmdf_zplus(height, plus=False)
+        time.sleep(1)
+        self.cmdf_xplus(n * 4, plus=True)
+        time.sleep(2)
+        self.cmdf_zplus(height)
+        time.sleep(1)
+
+        self.cmdf_xplus(n * 2, plus=False)
+        time.sleep(1)
+        self.cmdf_yplus(n * 2, plus=True)
+        time.sleep(1)
+
+        self.cmdf_zplus(height, plus=False)
+        time.sleep(1)
+        self.cmdf_yplus(n * 4, plus=False)
+        time.sleep(2)
+        self.cmdf_zplus(height)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
 if __name__ == "__main__":
     this_main = MainWindow()
     this_main.mainloop()
