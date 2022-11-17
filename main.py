@@ -392,6 +392,20 @@ class MainWindow(Tk):
         time.sleep(1)
 
         self.cmdf_down2paper()
+
+    def cmd_Sminus(self):
+        n = 2
+        height = 10
+        self.cmdf_xplus(n * 2, plus=False)
+        time.sleep(1)
+
+        self.cmdf_zplus(height, plus=False)
+        time.sleep(1)
+        self.cmdf_xplus(n * 4, plus=True)
+        time.sleep(2)
+
+        self.cmdf_down2paper()
+
 if __name__ == "__main__":
     this_main = MainWindow()
     this_main.mainloop()
