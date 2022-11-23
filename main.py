@@ -40,6 +40,7 @@ class MainWindow(Tk):
         #
         self.step = 32
         self.bias = 9
+        self.height = 10
         # 加载gui
         self.setup_UI()
 
@@ -72,14 +73,38 @@ class MainWindow(Tk):
         self.Button_show = Button(self.LabelFrame_cmd, text="显示正确答案", width=12)
         self.Button_show.place(x=260, y=10)
 
-        self.Button_cal = Button(self.LabelFrame_cmd, text="画勾", width=5, command=self.cmdf_gou2)
-        self.Button_cal.place(x=430, y=10)
+        self.Button_gou = Button(self.LabelFrame_cmd, text="画勾", width=5, command=self.cmdf_gou2)
+        self.Button_gou.place(x=430, y=10)
 
-        self.Button_cal = Button(self.LabelFrame_cmd, text="画叉", width=5, command=self.cmdf_cha2)
-        self.Button_cal.place(x=530, y=10)
+        self.Button_cha = Button(self.LabelFrame_cmd, text="画叉", width=5, command=self.cmdf_cha2)
+        self.Button_cha.place(x=530, y=10)
 
-        self.Button_cal = Button(self.LabelFrame_cmd, text="画加", width=5, command=self.cmdf_Splus)
-        self.Button_cal.place(x=630, y=10)
+        self.Button_plus = Button(self.LabelFrame_cmd, text="画加", width=5, command=self.cmdf_Splus)
+        self.Button_plus.place(x=630, y=10)
+
+        self.Button_minus = Button(self.LabelFrame_cmd, text="画减", width=5, command=self.cmdf_Sminus)
+        self.Button_minus.place(x=730, y=10)
+
+        self.Button_1 = Button(self.LabelFrame_cmd, text="1", width=2, command=self.cmdf_S1)
+        self.Button_1.place(x=810, y=10)
+        self.Button_2 = Button(self.LabelFrame_cmd, text="2", width=2, command=self.cmdf_S2)
+        self.Button_2.place(x=840, y=10)
+        self.Button_3 = Button(self.LabelFrame_cmd, text="3", width=2, command=self.cmdf_S3)
+        self.Button_3.place(x=870, y=10)
+        self.Button_4 = Button(self.LabelFrame_cmd, text="4", width=2, command=self.cmdf_S4)
+        self.Button_4.place(x=900, y=10)
+        self.Button_5 = Button(self.LabelFrame_cmd, text="5", width=2, command=self.cmdf_S5)
+        self.Button_5.place(x=930, y=10)
+        self.Button_6 = Button(self.LabelFrame_cmd, text="6", width=2, command=self.cmdf_S6)
+        self.Button_6.place(x=960, y=10)
+        self.Button_7 = Button(self.LabelFrame_cmd, text="7", width=2, command=self.cmdf_S7)
+        self.Button_7.place(x=990, y=10)
+        self.Button_8 = Button(self.LabelFrame_cmd, text="8", width=2, command=self.cmdf_S8)
+        self.Button_8.place(x=1020, y=10)
+        self.Button_9 = Button(self.LabelFrame_cmd, text="9", width=2, command=self.cmdf_S9)
+        self.Button_9.place(x=1050, y=10)
+        self.Button_0 = Button(self.LabelFrame_cmd, text="0", width=2, command=self.cmdf_S0)
+        self.Button_0.place(x=1080, y=10)
         # 添加电机控制控件
         # 第一行
         self.Button_cmd_run = Button(self.LabelFrame_ctrl, text="执行", command=self.cmdf_run)
@@ -280,7 +305,7 @@ class MainWindow(Tk):
 
     def cmdf_xplus(self, n=1, plus=True):
         X, Y, Z = self.fun_point_get()
-        X, Y, Z = self.delta_x(X, Y, Z, n=1, plus=plus)
+        X, Y, Z = self.delta_x(X, Y, Z, n=n, plus=plus)
         self.fun_point_set(X, Y, Z)
 
     def cmdf_yplus(self, n=1, plus=True):
@@ -330,7 +355,7 @@ class MainWindow(Tk):
         self.cmdf_yplus(n)
         time.sleep(1)
 
-        self.cmdf_zplus(height, plus=False)
+        self.cmdf_zplus(height)
         time.sleep(1)
         self.cmdf_xiexian(n, -2, plus=True)
         time.sleep(2)
@@ -344,65 +369,245 @@ class MainWindow(Tk):
 
     def cmdf_cha2(self):
         n = 2
-        height = 10
         self.cmdf_yplus(n*3)
         time.sleep(1)
 
-        self.cmdf_zplus(height, plus=False)
+        self.cmdf_zminus(self.height)
         time.sleep(1)
         self.cmdf_xiexian(n*4, -1, plus=True)
         time.sleep(2)
-        self.cmdf_zplus(height)
+        self.cmdf_zplus(self.height)
         time.sleep(1)
 
         self.cmdf_yplus(n*5)
         time.sleep(2)
 
-        self.cmdf_zplus(height, plus=False)
+        self.cmdf_zplus(self.height)
         time.sleep(1)
         self.cmdf_xiexian(n*5, 1.2, plus=False)
         time.sleep(2)
-        self.cmdf_zplus(height)
+        self.cmdf_zplus(self.height)
         time.sleep(1)
 
         self.cmdf_down2paper()
     def cmdf_Splus(self):
         n = 2
-        height = 10
-        self.cmdf_xplus(n * 2, plus=False)
+
+        self.cmdf_xminus(n * 2)
         time.sleep(1)
 
-        self.cmdf_zplus(height, plus=False)
+        self.cmdf_zminus(self.height)
         time.sleep(1)
-        self.cmdf_xplus(n * 4, plus=True)
+        self.cmdf_xplus(n * 4)
         time.sleep(2)
-        self.cmdf_zplus(height)
+        self.cmdf_zplus(self.height)
         time.sleep(1)
 
-        self.cmdf_xplus(n * 2, plus=False)
+        self.cmdf_xminus(n * 2)
         time.sleep(1)
-        self.cmdf_yplus(n * 2, plus=True)
+        self.cmdf_yplus(n * 2)
         time.sleep(1)
 
-        self.cmdf_zplus(height, plus=False)
+        self.cmdf_zminus(self.height)
         time.sleep(1)
-        self.cmdf_yplus(n * 4, plus=False)
+        self.cmdf_yminus(n * 4)
         time.sleep(2)
-        self.cmdf_zplus(height)
+        self.cmdf_zplus(self.height)
         time.sleep(1)
 
         self.cmdf_down2paper()
 
-    def cmd_Sminus(self):
+    def cmdf_Sminus(self):
         n = 2
-        height = 10
         self.cmdf_xplus(n * 2, plus=False)
         time.sleep(1)
 
-        self.cmdf_zplus(height, plus=False)
+        self.cmdf_zplus(self.height, plus=False)
         time.sleep(1)
         self.cmdf_xplus(n * 4, plus=True)
         time.sleep(2)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S1(self):
+        n = 2
+        self.cmdf_yplus(n * 2)
+        time.sleep(1)
+
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+        self.cmdf_yminus(n * 4)
+        time.sleep(2)
+        self.cmdf_zplus(self.height)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S2(self):
+        n = 2
+        self.cmdf_xiexian(n * 2, -1, plus=False)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+        self.cmdf_yminus(n * 2)
+        time.sleep(1)
+        self.cmdf_xminus(n * 2)
+        time.sleep(1)
+        self.cmdf_yminus(n * 2)
+        time.sleep(1)
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S3(self):
+        n = 2
+        self.cmdf_xiexian(n * 2, -1, plus=False)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+        self.cmdf_xiexian(n * 2, 1, plus=False)
+        time.sleep(1)
+        self.cmdf_xiexian(n * 3, -0.5, plus=True)
+        time.sleep(1)
+        self.cmdf_xiexian(n * 2, 2, plus=False)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S4(self):
+        n = 2
+        self.cmdf_xiexian(n * 2, -1, plus=True)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_xminus(n * 2 + 1)
+        time.sleep(1)
+        self.cmdf_xiexian(n * 2 + 1, 1, plus=True)
+        time.sleep(1)
+        self.cmdf_yminus(n * 4)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S5(self):
+        n = 2
+        self.cmdf_xiexian(n * 2, 1, plus=True)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_xminus(n * 2)
+        time.sleep(1)
+        self.cmdf_yminus(n * 1)
+        time.sleep(1)
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+        self.cmdf_yminus(n * 2)
+        time.sleep(1)
+        self.cmdf_xminus(n * 2)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S6(self):
+        n = 2
+        self.cmdf_xiexian(n * 1, -1, plus=False)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_yminus(n * 4)
+        time.sleep(1)
+        self.cmdf_xplus(n * 3)
+        time.sleep(1)
+        self.cmdf_yplus(n * 3)
+        time.sleep(1)
+        self.cmdf_xminus(n * 2)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S7(self):
+        n = 2
+        self.cmdf_xiexian(n * 2, -1, plus=False)
+        time.sleep(1)
+
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+        self.cmdf_xplus(n * 3)
+        time.sleep(1)
+        self.cmdf_xiexian(n * 3, 1, plus=False)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S8(self):
+        n = 2
+        self.cmdf_xminus(n * 1)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_yminus(n * 2)
+        time.sleep(1)
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+        self.cmdf_yplus(n * 2)
+        time.sleep(1)
+        self.cmdf_xminus(n * 2)
+        time.sleep(1)
+        self.cmdf_yplus(n * 2)
+        time.sleep(1)
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+        self.cmdf_yminus(n * 2)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S9(self):
+        n = 2
+        self.cmdf_xplus(n * 1)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_xminus(n * 2)
+        time.sleep(1)
+        self.cmdf_yplus(n * 2)
+        time.sleep(1)
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+        self.cmdf_yminus(n * 4)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_S0(self):
+        n = 2
+        self.cmdf_xminus(n * 1)
+        time.sleep(1)
+        self.cmdf_zminus(self.height)
+        time.sleep(1)
+
+        self.cmdf_yminus(n * 4)
+        time.sleep(1)
+        self.cmdf_xplus(n * 2)
+        time.sleep(1)
+        self.cmdf_yplus(n * 4)
+        time.sleep(1)
+        self.cmdf_xminus(n * 2)
+        time.sleep(1)
+        # self.cmdf_yminus(n * 2)
+        # time.sleep(1)
 
         self.cmdf_down2paper()
 
