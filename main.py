@@ -9,8 +9,15 @@ from PIL import Image, ImageTk
 import serial
 import time  # 延时使用
 import binascii
+import cv2
+import easyocr
 
-s = serial.Serial("COM3", 115200)  # 初始化串口
+test = 1
+if test == 1:
+    s = 0
+else:
+    s = serial.Serial("COM3", 115200)  # 初始化串口
+reader = easyocr.Reader(['en'])
 
 # 主窗口类
 class MainWindow(Tk):
@@ -22,6 +29,7 @@ class MainWindow(Tk):
         self["bg"] = "skyblue"
         # 初始化变量
         self.stopflag = 0
+        self.test = test
         # PC对机器人的命令
         self.Head = 'f628f628 '
         self.Tail = ' a5a5a5a5'
@@ -56,6 +64,10 @@ class MainWindow(Tk):
         # 上边：图像区域,创建一个容器
         self.Pane_canvas = PanedWindow(width=1290, height=530, style="bottom.TPanedwindow")
         self.Pane_canvas.place(x=5, y=5)
+        # 在窗口画布//
+        self.canvas = Canvas(self.Pane_canvas, width=1280, height=520, bg="white")
+        # self.Pane_canvas.canvas.place(x=5, y=5)
+        self.canvas.pack()
         # LabelFrame
         self.LabelFrame_cmd = LabelFrame(self.Pane_bottom, text="操作栏", width=1270, height=80)
         self.LabelFrame_cmd.place(x=10, y=10)
@@ -67,23 +79,29 @@ class MainWindow(Tk):
         self.Button_show = Button(self.LabelFrame_cmd, text="启动相机", width=8, command=self.camara_open)
         self.Button_show.place(x=10, y=10)
 
-        self.Button_getframe = Button(self.LabelFrame_cmd, text="截取图像", width=8)
-        self.Button_getframe.place(x=130, y=10)
+        self.Button_getframe = Button(self.LabelFrame_cmd, text="截取图像", width=8, command=self.picture_save)
+        self.Button_getframe.place(x=120, y=10)
 
-        self.Button_show = Button(self.LabelFrame_cmd, text="显示正确答案", width=12)
-        self.Button_show.place(x=260, y=10)
+        self.Button_show = Button(self.LabelFrame_cmd, text="批改", width=5, command=self.Correcting_Machines_2)
+        self.Button_show.place(x=230, y=10)
+
+        self.Button_show = Button(self.LabelFrame_cmd, text="计算", width=5, command=self.Compute_machine)
+        self.Button_show.place(x=300, y=10)
+
+        self.Button_show = Button(self.LabelFrame_cmd, text="预测", width=5, command=self.Predict_Machines)
+        self.Button_show.place(x=370, y=10)
 
         self.Button_gou = Button(self.LabelFrame_cmd, text="画勾", width=5, command=self.cmdf_gou2)
-        self.Button_gou.place(x=430, y=10)
+        self.Button_gou.place(x=450, y=10)
 
         self.Button_cha = Button(self.LabelFrame_cmd, text="画叉", width=5, command=self.cmdf_cha2)
         self.Button_cha.place(x=530, y=10)
 
         self.Button_plus = Button(self.LabelFrame_cmd, text="画加", width=5, command=self.cmdf_Splus)
-        self.Button_plus.place(x=630, y=10)
+        self.Button_plus.place(x=610, y=10)
 
         self.Button_minus = Button(self.LabelFrame_cmd, text="画减", width=5, command=self.cmdf_Sminus)
-        self.Button_minus.place(x=730, y=10)
+        self.Button_minus.place(x=690, y=10)
 
         self.Button_1 = Button(self.LabelFrame_cmd, text="1", width=2, command=self.cmdf_S1)
         self.Button_1.place(x=810, y=10)
@@ -172,28 +190,31 @@ class MainWindow(Tk):
         self.Entry_receive.place(x=90, y=98)
         self.var_receive.set("")
 
-        # 在窗口画布//
-        self.Pane_canvas.canvas = Canvas(width=1280, height=520, bg="white")
-        self.Pane_canvas.canvas.pack()
-
     def camara_open(self):
-        cap = cv2.VideoCapture(0)
-        while cap.isOpened():  # isOpened()  检测摄像头是否处于打开状态
-            ref, frame = cap.read()
-            frame = cv2.flip(frame, 1)  # 摄像头翻转
-            cvimage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+        self.canvas.delete('all')
+        self.cap = cv2.VideoCapture(0)
+        self.stopflag = 0
+        while self.cap.isOpened():  # isOpened()  检测摄像头是否处于打开状态
+            ref, self.frame = self.cap.read()
+            # frame = cv2.flip(frame, 1)  # 摄像头翻转
+            cvimage = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGBA)
             pilImage = Image.fromarray(cvimage)
-            pilImage = pilImage.resize((600, 480), Image.LANCZOS)
+            pilImage = pilImage.resize((600, 480))#, Image.LANCZOS
             tkImage = ImageTk.PhotoImage(image=pilImage)
+            tkImage = np.array(tkImage)
             if ref:  # 如果摄像头读取图像成功
-                self.Pane_canvas.canvas.create_image(300, 240, image=tkImage)
+                temp = self.canvas.create_image(300, 240, image=tkImage)
                 self.update_idletasks()
                 self.update()
-                k = cv2.waitKey(100)
-                if k == ord('a') or k == ord('A'):
-                    cv2.imwrite('test.jpg', tkImage)
+                if self.stopflag == 1:
                     break
-        cap.release()  # 关闭摄像头
+        self.cap.release()  # 关闭摄像头
+
+    def picture_save(self):
+        self.stopflag = 1
+        # self.canvas.delete('all')
+        cv2.imwrite('./data/frame.jpg', self.frame)  # 保存路径
+        self.canvas.create_image(300, 240, image=self.frame)
 
     def cmdf_run(self):
         cmd = self.Head + self.cmd_run + ' 0000' + self.Tail
@@ -355,10 +376,27 @@ class MainWindow(Tk):
         self.cmdf_yplus(n)
         time.sleep(1)
 
-        self.cmdf_zplus(height)
+        self.cmdf_zminus(height)
         time.sleep(1)
         self.cmdf_xiexian(n, -2, plus=True)
         time.sleep(2)
+
+        self.cmdf_xiexian(n * 4, 1, plus=True)
+        time.sleep(2)
+        self.cmdf_zplus(height)
+        time.sleep(1)
+
+        self.cmdf_down2paper()
+
+    def cmdf_chu(self):
+        n = 3
+        height = 10
+        self.cmdf_yplus(n)
+        time.sleep(1)
+        self.cmdf_xiexian(n, -2, plus=True)
+        time.sleep(1)
+        self.cmdf_zminus(height)
+        time.sleep(1)
 
         self.cmdf_xiexian(n * 4, 1, plus=True)
         time.sleep(2)
@@ -382,8 +420,8 @@ class MainWindow(Tk):
         self.cmdf_yplus(n*5)
         time.sleep(2)
 
-        self.cmdf_zplus(self.height)
-        time.sleep(1)
+        self.cmdf_zminus(self.height + 5)
+        time.sleep(2)
         self.cmdf_xiexian(n*5, 1.2, plus=False)
         time.sleep(2)
         self.cmdf_zplus(self.height)
@@ -592,7 +630,7 @@ class MainWindow(Tk):
         self.cmdf_down2paper()
 
     def cmdf_S0(self):
-        n = 2
+        n = 1
         self.cmdf_xminus(n * 1)
         time.sleep(1)
         self.cmdf_zminus(self.height)
@@ -610,6 +648,209 @@ class MainWindow(Tk):
         # time.sleep(1)
 
         self.cmdf_down2paper()
+
+    def Correcting_Machines_2(self):
+        """
+        1+1=3 ？
+        """
+        self.stopflag = 1
+
+        img = cv2.imread('./data/frame.jpg')
+        # self.canvas.create_image(300, 240, image=cv2.imread('./data/frame.jpg'))
+        # self.canvas.create_image(300, 240, image=img)
+        # self.update_idletasks()
+        # self.update()
+
+        result = reader.readtext(img)
+        m = []
+        for res in result:
+            m.append(res[1])
+        #print(m)  # m:['11+11', '=20']
+        #print('\n')
+        # print(m[0]) #m[0]:11+11   m[1]:=20
+        # print('\n')
+        arry = []
+        for i in m:
+
+            for q in i:
+                arry.append(q)
+        # print(arry) #arry:  ['1', '1', '+', '1', '1', '=', '2', '0']
+        num_1 = []
+        num_2 = []
+        num_3 = []
+        flag = 0
+        for i in arry:
+            if i.isdigit() and (flag == 0):
+                num_1.append(int(i))  # [1, 1]
+            elif i.isdigit() and (flag == 1):
+                num_2.append(int(i))  # [1, 1]
+            elif i.isdigit() and (flag == 2):
+                num_3.append(int(i))  # [2, 0]
+            elif i != ' ':
+                flag = flag + 1
+        add_1 = ""
+        add_2 = ""
+        sum = ""
+        for a in num_1:
+            add_1 += str(a)
+        for a in num_2:
+            add_2 += str(a)
+        for a in num_3:
+            sum += str(a)
+        add_1 = int(add_1)  # add_1:11
+        add_2 = int(add_2)  # add_2:11
+        sum = int(sum)  # sum:20
+        if (add_1 + add_2) == sum:
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='green', outline='green', width=2)
+            self.canvas.create_text((950, 240), text='Correct!', font=("Microsoft YaHei", 50))
+            if self.test == 0:
+                self.cmdf_gou2()
+            print("Correct!")
+        else:
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='red', outline='green', width=2)
+            self.canvas.create_text((950, 240), text='Wrong!', font=("Microsoft YaHei", 50))
+            if self.test == 0:
+                self.cmdf_cha2()
+            print("Wrong!")
+
+    def predict(self, x, y, z):
+        if x * y == z:
+            print("*")
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='blue', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(x)+'X'+str(y)+'='+str(z), font=("Microsoft YaHei", 50))
+            if self.test == 0:
+                self.cmdf_cha2()
+            return 0
+        elif x + y == z:
+            print("+")
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='blue', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(x) + '+' + str(y) + '=' + str(z), font=("Microsoft YaHei", 50))
+            if self.test == 0:
+                self.cmdf_Splus()
+            return 1
+        elif x - y == z:
+            print("-")
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='blue', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(x) + '-' + str(y) + '=' + str(z), font=("Microsoft YaHei", 50))
+            if self.test == 0:
+                self.cmdf_Sminus()
+            return 2
+        elif x // y == z:
+            print("/")
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='blue', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(x) + '/' + str(y) + '=' + str(z), font=("Microsoft YaHei", 50))
+            if self.test == 0:
+                self.cmdf_Schu()
+            return 3
+
+
+    def Predict_Machines(self):
+        """
+        1？1 =2
+        """
+        self.stopflag = 1
+        img = cv2.imread('./data/frame.jpg')
+        result = reader.readtext(img)
+        m = []
+        for res in result:
+            m.append(res[1])
+        arry = []
+        for i in m:
+            for q in i:
+                arry.append(q)
+        num_1 = []
+        num_2 = []
+        num_3 = []
+        flag = 0
+        for i in arry:
+            if i.isdigit() and (flag == 0):
+                num_1.append(int(i))  # [3]
+            elif i.isdigit() and (flag == 1):
+                num_2.append(int(i))  # [1, 1]
+            # elif i.isdigit() and (flag == 2):
+            #   num_3.append(int(i)) #[2, 0]
+            elif i != ' ':
+                flag = flag + 1
+        insert_pos = len(num_1) // 2
+        num_1.insert(insert_pos, 'x')
+        num_1_1 = []
+        num_2_2 = []
+        funk = 0
+        for i in num_1:
+            if type(i) == int and (funk == 0):
+                num_1_1.append(int(i))
+            elif type(i) == int and (funk == 1):
+                num_2_2.append(int(i))
+            elif i != ' ':
+                funk = funk + 1
+        add_1 = ""
+        add_2 = ""
+        sum = ""
+        for a in num_1_1:
+            add_1 += str(a)
+        for a in num_2_2:
+            add_2 += str(a)
+        for a in num_2:
+            sum += str(a)
+        add_1 = int(add_1)  # add_1:14
+        add_2 = int(add_2)  # add_2:21
+        sum = int(sum)  # sum:294
+        self.predict(add_1, add_2, sum)
+
+    def Compute_machine(self):
+        """
+        1+1=?
+        """
+        self.stopflag = 1
+        img = cv2.imread('./data/frame.jpg')
+        m = []
+        result = reader.readtext(img)
+        for res in result:
+            m.append(res[1])
+        print('\n')
+        arry = []
+        for i in m:
+            for q in i:
+                arry.append(q)
+        num_1 = []
+        num_2 = []
+        num_3 = []
+        flag = 0
+        for i in arry:
+            if i.isdigit() and (flag == 0):
+                num_1.append(int(i))  # [3]
+            elif i.isdigit() and (flag == 1):
+                num_2.append(int(i))  # [1, 1]
+            elif i != ' ':
+                num_3.append(i)
+                flag = flag + 1
+        num_4 = str(num_3[0])  # 符号 +
+        add_1 = ""
+        add_2 = ""
+        for a in num_1:
+            add_1 += str(a)
+        for a in num_2:
+            add_2 += str(a)
+        add_1 = int(add_1)  # add_1:12
+        add_2 = int(add_2)  # add_2:18
+        if num_4 == '+':
+            final = add_1 + add_2
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='yellow', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(add_1) + '+' + str(add_2) + '=' + str(final), font=("Microsoft YaHei", 50))
+            self
+        elif num_4 == '-':
+            final = add_1 - add_2
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='yellow', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(add_1) + '-' + str(add_2) + '=' + str(final), font=("Microsoft YaHei", 50))
+        elif num_4 == 'X' or 'x':
+            final = add_1 * add_2
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='yellow', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(add_1) + 'X' + str(add_2) + '=' + str(final), font=("Microsoft YaHei", 50))
+        elif num_4 == '/':
+            final = add_1 // add_2
+            self.canvas.create_rectangle(650, 5, 1250, 480, fill='yellow', outline='green', width=2)
+            self.canvas.create_text((950, 240), text=str(add_1) + '/' + str(add_2) + '=' + str(final), font=("Microsoft YaHei", 50))
+        print(final)
 
 if __name__ == "__main__":
     this_main = MainWindow()
